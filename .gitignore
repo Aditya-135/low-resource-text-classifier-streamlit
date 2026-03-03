@@ -1,0 +1,7 @@
+__pycache__/
+results/
+saved_models/
+experiments/
+*.pyc
+*.json
+convert_kaggle.py
