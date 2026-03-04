@@ -1,26 +1,25 @@
 import random
 import nltk
-import os
 from nltk.corpus import wordnet
 
-# Fix for Streamlit cloud nltk path
-NLTK_DATA_DIR = "/home/appuser/nltk_data"
+# Ensure required NLTK resources exist
+def ensure_nltk():
+    try:
+        nltk.data.find("corpora/wordnet")
+    except LookupError:
+        nltk.download("wordnet")
 
-if not os.path.exists(NLTK_DATA_DIR):
-    os.makedirs(NLTK_DATA_DIR)
+    try:
+        nltk.data.find("corpora/omw-1.4")
+    except LookupError:
+        nltk.download("omw-1.4")
 
-nltk.data.path.append(NLTK_DATA_DIR)
 
-# Ensure datasets exist
-try:
-    nltk.data.find("corpora/wordnet")
-except LookupError:
-    nltk.download("wordnet", download_dir=NLTK_DATA_DIR)
-    nltk.download("omw-1.4", download_dir=NLTK_DATA_DIR)
+# Run check when module loads
+ensure_nltk()
 
 
 def synonym_replacement(text):
-
     words = text.split()
 
     if not words:
@@ -28,28 +27,25 @@ def synonym_replacement(text):
 
     word = random.choice(words)
 
-    synonyms = wordnet.synsets(word)
+    try:
+        synonyms = wordnet.synsets(word)
+    except LookupError:
+        return text
 
     if synonyms:
         lemma = synonyms[0].lemmas()[0].name()
-
-        if lemma.lower() != word.lower():
-            return text.replace(word, lemma)
+        return text.replace(word, lemma)
 
     return text
 
 
 def adaptive_augment(texts, labels, report):
-
     augmented_texts = list(texts)
     augmented_labels = list(labels)
 
     if report["resource_level"] in ["extremely_low", "low"]:
-
         for text, label in zip(texts, labels):
-
             new_text = synonym_replacement(text)
-
             augmented_texts.append(new_text)
             augmented_labels.append(label)
 
